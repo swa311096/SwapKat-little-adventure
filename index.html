@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SwapKat's Adventure Time</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div id="app"></div>
+
+  <!-- Login Screen -->
+  <template id="login-template">
+    <main class="login-page">
+      <div class="login-card">
+        <section class="login-branding">
+          <div class="brand-avatar"></div>
+          <h1>SwapKat's<br>Adventure Time</h1>
+          <p>Ready for our next big peak together?</p>
+          <div class="brand-icons">
+            <div class="brand-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+            <div class="brand-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></div>
+            <div class="brand-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1zM4 22v-7"/></svg></div>
+          </div>
+        </section>
+        <section class="login-form-section">
+          <h2>Welcome Back</h2>
+          <p class="login-subhead">Please enter your details to stay tracked.</p>
+          <form id="login-form">
+            <label>
+              <span class="label-text">EMAIL ADDRESS</span>
+              <input type="email" placeholder="us@adventure.com" />
+            </label>
+            <label>
+              <span class="label-text">PASSWORD</span>
+              <input type="password" placeholder="••••••••" />
+              <a href="#" class="forgot-link">FORGOT?</a>
+            </label>
+            <div class="user-picks">
+              <button type="button" data-login-user="Swapnil" class="user-pick">
+                <span class="user-avatar swapnil"></span>
+                <span>LOGIN AS SWAPNIL</span>
+              </button>
+              <button type="button" data-login-user="Kat" class="user-pick">
+                <span class="user-avatar kat"></span>
+                <span>LOGIN AS KAT</span>
+              </button>
+            </div>
+            <button type="submit" class="btn-primary btn-login">
+              Login to Dashboard
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+          </form>
+          <p class="login-footer">Not part of the adventure? <a href="#">Request Access</a></p>
+        </section>
+      </div>
+    </main>
+  </template>
+
+  <!-- Dashboard -->
+  <template id="dashboard-template">
+    <div class="dashboard">
+      <header class="topbar">
+        <div class="logo">
+          <div class="logo-icon">▶</div>
+          <h1>SwapKat's Adventure Time</h1>
+        </div>
+        <div class="nav-tabs">
+          <button class="nav-tab" data-tab="personal">Personal</button>
+          <button class="nav-tab active" data-tab="work">Work</button>
+        </div>
+        <div class="topbar-right">
+          <div class="sync-status">
+            <span class="sync-text">EVERYTHING'S SYNCED</span>
+            <span class="sync-time">Just now</span>
+          </div>
+          <button id="logout-btn" class="btn-ghost btn-logout" title="Logout">Logout</button>
+          <div class="user-avatar-small">
+            <span>SK</span>
+            <span class="notification-dot">1</span>
+          </div>
+        </div>
+      </header>
+
+      <div class="user-selector">
+        <button class="user-pill active" data-user="Swapnil">
+          <span class="pill-avatar swapnil">S</span>
+          <span>Swapnil</span>
+        </button>
+        <button class="user-pill" data-user="Kat">
+          <span class="pill-avatar kat">K</span>
+          <span>Kat</span>
+        </button>
+      </div>
+
+      <main class="main-grid">
+        <section class="card goals-card" id="goals-card"></section>
+        <section class="card outcomes-card" id="outcomes-card"></section>
+        <section class="card behaviors-card" id="behaviors-card"></section>
+      </main>
+
+      <section class="card history-card" id="history-card"></section>
+
+      <footer class="app-footer">
+        <span>© 2023 Swapnil & Kat Productivity Hub</span>
+        <div class="footer-links">
+          <a href="#">PRIVACY</a>
+          <a href="#">TERMS</a>
+          <a href="#">SUPPORT</a>
+        </div>
+      </footer>
+    </div>
+  </template>
+
+  <!-- Modal Shell -->
+  <template id="modal-template">
+    <div class="modal-backdrop" id="modal-backdrop">
+      <div class="modal" id="modal-content"></div>
+    </div>
+  </template>
+
+  <script src="./app.js"></script>
+</body>
+</html>
