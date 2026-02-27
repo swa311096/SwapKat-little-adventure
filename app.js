@@ -23,6 +23,20 @@ function getThisWeekLabel() {
   return `${fmt.format(start)} — ${fmt.format(end)}`;
 }
 
+function rollWeekIfNeeded(userData) {
+  const currentWeek = getThisWeekLabel();
+  if (userData.weekLabel === currentWeek) return false;
+  // New week: pending from last week → this week; incomplete this week → "unfinished last week"; completed → remove
+  const oldCarried = userData.tasks.filter((t) => t.carriedOver && !t.done);
+  const newIncomplete = userData.tasks.filter((t) => !t.carriedOver && !t.done);
+  userData.tasks = [
+    ...oldCarried.map((t) => ({ ...t, carriedOver: false })),
+    ...newIncomplete.map((t) => ({ ...t, carriedOver: true }))
+  ];
+  userData.weekLabel = currentWeek;
+  return true;
+}
+
 function escapeHtml(str) {
   return String(str ?? "")
     .replaceAll("&", "&amp;")
@@ -75,28 +89,28 @@ function createSeedData(name, context) {
           { id: uid(), title: "Design sprint for new feature", done: true, outcomeId: baseOutcomes[0].id, carriedOver: false },
           { id: uid(), title: "User research interviews", done: true, outcomeId: baseOutcomes[0].id, carriedOver: false },
           { id: uid(), title: "Create Figma prototypes", done: false, outcomeId: baseOutcomes[1].id, carriedOver: false },
-          { id: uid(), title: "Stakeholder presentation", done: false, outcomeId: null, carriedOver: false },
-          { id: uid(), title: "Design system updates", done: false, outcomeId: null, carriedOver: true }
+          { id: uid(), title: "Stakeholder presentation", done: false, outcomeId: baseOutcomes[1].id, carriedOver: false },
+          { id: uid(), title: "Design system updates", done: false, outcomeId: baseOutcomes[2].id, carriedOver: true }
         ]
       : [
           { id: uid(), title: "Complete Q4 project roadmap", done: true, outcomeId: baseOutcomes[0].id, carriedOver: false },
           { id: uid(), title: "Bi-weekly client sync meeting", done: true, outcomeId: baseOutcomes[0].id, carriedOver: false },
-          { id: uid(), title: "Finalize hiring brief", done: false, outcomeId: null, carriedOver: false },
-          { id: uid(), title: "Update internal documentation", done: false, outcomeId: null, carriedOver: false },
-          { id: uid(), title: "Quarterly tax filing", done: false, outcomeId: null, carriedOver: true }
+          { id: uid(), title: "Finalize hiring brief", done: false, outcomeId: baseOutcomes[0].id, carriedOver: false },
+          { id: uid(), title: "Update internal documentation", done: false, outcomeId: baseOutcomes[0].id, carriedOver: false },
+          { id: uid(), title: "Quarterly tax filing", done: false, outcomeId: baseOutcomes[0].id, carriedOver: true }
         ]
     : isKat
       ? [
           { id: uid(), title: "Yoga class 3x", done: true, outcomeId: baseOutcomes[0].id, carriedOver: false },
           { id: uid(), title: "Meal prep for the week", done: false, outcomeId: baseOutcomes[0].id, carriedOver: false },
-          { id: uid(), title: "Photography project editing", done: false, outcomeId: null, carriedOver: false },
-          { id: uid(), title: "Friend catch-up call", done: false, outcomeId: null, carriedOver: true }
+          { id: uid(), title: "Photography project editing", done: false, outcomeId: baseOutcomes[0].id, carriedOver: false },
+          { id: uid(), title: "Friend catch-up call", done: false, outcomeId: baseOutcomes[0].id, carriedOver: true }
         ]
       : [
           { id: uid(), title: "Gym 3x this week", done: true, outcomeId: baseOutcomes[1].id, carriedOver: false },
           { id: uid(), title: "Finish current book", done: false, outcomeId: baseOutcomes[1].id, carriedOver: false },
-          { id: uid(), title: "Plan weekend hike", done: false, outcomeId: null, carriedOver: false },
-          { id: uid(), title: "Call family", done: false, outcomeId: null, carriedOver: true }
+          { id: uid(), title: "Plan weekend hike", done: false, outcomeId: baseOutcomes[0].id, carriedOver: false },
+          { id: uid(), title: "Call family", done: false, outcomeId: baseOutcomes[0].id, carriedOver: true }
         ];
   return {
     weekLabel: getThisWeekLabel(),
@@ -127,6 +141,14 @@ function loadDB() {
       }
       saveDB(parsed);
     }
+    // Auto-roll week: pending tasks from last week become this week's tasks
+    let changed = false;
+    Object.keys(parsed.users || {}).forEach((user) => {
+      const u = parsed.users[user];
+      if (u?.personal && rollWeekIfNeeded(u.personal)) changed = true;
+      if (u?.work && rollWeekIfNeeded(u.work)) changed = true;
+    });
+    if (changed) saveDB(parsed);
     return parsed;
   }
   const seed = {
@@ -381,32 +403,46 @@ function taskRow(t, data, carriedOver = false) {
 
 function renderOutcomesCard(data) {
   const el = document.getElementById("outcomes-card");
+  const avgPct = data.outcomes.length
+    ? Math.round(
+        data.outcomes.reduce((sum, o) => sum + linkedOutcomeProgress(o, data), 0) / data.outcomes.length
+      )
+    : 0;
   el.innerHTML = `
     <div class="card-header">
       <div class="card-title">
-        <div class="icon-bubble icon-star">★</div>
         <h2>Important Outcomes</h2>
+        <span class="badge-active">Active</span>
       </div>
+      <button class="btn-add-circle" id="add-outcome-btn" title="Define outcome">+</button>
     </div>
-    <div class="outcome-list">
-      ${data.outcomes
+    <div class="date-range">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      ${escapeHtml(data.weekLabel)}
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-num">${avgPct}<span>%</span></div>
+      <div class="progress-bar"><div class="progress-bar-fill" style="width:${avgPct}%"></div></div>
+    </div>
+    <div class="task-list outcome-list">
+      ${(data.outcomes || [])
         .map((o) => {
+          const linked = data.tasks.filter((t) => t.outcomeId === o.id && !t.carriedOver);
+          const doneCount = linked.filter((t) => t.done).length;
           const pct = linkedOutcomeProgress(o, data);
           const statusCls = pct >= 70 ? "updated" : "complete";
           const itemCls = pct >= 70 ? "updated" : "";
+          const taskSummary = linked.length > 0 ? `${doneCount} of ${linked.length} tasks` : "No linked tasks";
           return `
-          <div class="outcome-item ${itemCls}">
-            <div class="outcome-header">
-              <div>
-                <div class="outcome-title">${escapeHtml(o.title)}</div>
-                <div class="outcome-status ${statusCls}">${outcomeStatusText(pct)}</div>
-                <div class="progress-bar"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
-                <div class="outcome-pct">${pct}%</div>
-              </div>
-              <div class="task-actions">
-                <button data-edit-outcome="${o.id}">Edit</button>
-                <button data-delete-outcome="${o.id}">Delete</button>
-              </div>
+          <div class="task-item outcome-item ${itemCls}">
+            <div class="task-content" style="flex:1;">
+              <div class="task-title">${escapeHtml(o.title)}</div>
+              <div class="task-sub outcome-status ${statusCls}">${taskSummary} · ${pct}%</div>
+              <div class="progress-bar" style="margin-top:6px; height:6px;"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+            </div>
+            <div class="task-actions">
+              <button data-edit-outcome="${o.id}">Edit</button>
+              <button data-delete-outcome="${o.id}">Delete</button>
             </div>
           </div>
         `;
@@ -416,6 +452,7 @@ function renderOutcomesCard(data) {
     <button class="btn-dashed" id="define-outcome-btn">+ Define Outcome</button>
   `;
 
+  el.querySelector("#add-outcome-btn").addEventListener("click", () => setModal({ modal: "define-outcome" }));
   el.querySelector("#define-outcome-btn").addEventListener("click", () => setModal({ modal: "define-outcome" }));
 
   el.querySelectorAll("[data-edit-outcome]").forEach((node) => {
@@ -431,42 +468,51 @@ function renderOutcomesCard(data) {
 
 function renderBehaviorsCard(data) {
   const el = document.getElementById("behaviors-card");
+  const totalBreaches = (data.behaviorLogs || []).length;
   el.innerHTML = `
     <div class="card-header">
       <div class="card-title">
-        <div class="icon-bubble icon-behavior">!</div>
         <h2>Critical Behaviors</h2>
+        <span class="badge-active">Active</span>
       </div>
+      <button class="btn-add-circle" id="add-behavior-btn" title="Add behavior">+</button>
     </div>
-    <div class="behavior-list">
-      ${data.behaviors
-        .map(
-          (b) => {
-            const breachCount = (data.behaviorLogs || []).filter((l) => l.behaviorId === b.id).length;
-            return `
-        <div class="behavior-item">
-          <div class="behavior-header">
-            <div class="behavior-title">${escapeHtml(b.title)}</div>
-            <div class="breach-control">
-              <button class="breach-btn breach-minus" data-remove-breach="${b.id}" title="Remove a breach" ${breachCount === 0 ? "disabled" : ""}>−</button>
-              <span class="breach-badge" data-count="${breachCount}" title="Times breached">${breachCount} breach${breachCount === 1 ? "" : "es"}</span>
-              <button class="breach-btn breach-add-btn" data-add-breach="${b.id}" title="Mark a breach">+</button>
+    <div class="date-range">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      ${escapeHtml(data.weekLabel)}
+    </div>
+    <div class="progress-wrap progress-wrap-behaviors">
+      <div class="progress-num">${totalBreaches}<span> breaches</span></div>
+      <div class="progress-bar"><div class="progress-bar-fill" style="width:${Math.min(100, totalBreaches * 15)}%"></div></div>
+    </div>
+    <div class="task-list behavior-list">
+      ${(data.behaviors || [])
+        .map((b) => {
+          const breachCount = (data.behaviorLogs || []).filter((l) => l.behaviorId === b.id).length;
+          return `
+          <div class="task-item behavior-item">
+            <div class="task-content" style="flex:1;">
+              <div class="task-title">${escapeHtml(b.title)}</div>
+              <div class="task-sub behavior-goal">Goal: ${escapeHtml(b.goal)}</div>
+              <div class="breach-control" style="margin-top:6px;">
+                <button class="breach-btn breach-minus" data-remove-breach="${b.id}" title="Remove a breach" ${breachCount === 0 ? "disabled" : ""}>−</button>
+                <span class="breach-badge" data-count="${breachCount}">${breachCount} breach${breachCount === 1 ? "" : "es"}</span>
+                <button class="breach-btn breach-add-btn" data-add-breach="${b.id}" title="Mark a breach">+</button>
+              </div>
+            </div>
+            <div class="task-actions">
+              <button data-edit-behavior="${b.id}">Edit</button>
+              <button data-delete-behavior="${b.id}">Delete</button>
             </div>
           </div>
-          <div class="behavior-goal">Goal: ${escapeHtml(b.goal)}</div>
-          <div class="task-actions" style="margin-top:10px;">
-            <button data-edit-behavior="${b.id}">Edit</button>
-            <button data-delete-behavior="${b.id}">Delete</button>
-          </div>
-        </div>
-      `;
-          }
-        )
+        `;
+        })
         .join("")}
     </div>
     <button class="btn-dashed" id="track-behavior-btn">+ Track Behavior</button>
   `;
 
+  el.querySelector("#add-behavior-btn").addEventListener("click", () => setModal({ modal: "define-behavior" }));
   el.querySelector("#track-behavior-btn").addEventListener("click", () => setModal({ modal: "track-behavior" }));
 
   el.querySelectorAll("[data-edit-behavior]").forEach((node) => {
@@ -569,6 +615,7 @@ function renderModal() {
   // Add/Edit Task
   if (state.modal === "add-task") {
     const task = state.id ? data.tasks.find((t) => t.id === state.id) : null;
+    const hasOutcomes = data.outcomes && data.outcomes.length > 0;
     content.innerHTML = `
       <div class="modal-head">
         <div>
@@ -577,17 +624,17 @@ function renderModal() {
         </div>
         ${closeBtn}
       </div>
-      <div class="modal-subhead">Link to an outcome</div>
+      <div class="modal-subhead">Each task must be linked to an outcome. Outcome progress is updated automatically when you complete tasks.</div>
       <form id="task-form">
         <label>
           <span class="label-text">Task description</span>
           <input name="title" required placeholder="e.g., Finalize project roadmap" value="${escapeHtml(task?.title || "")}" />
         </label>
         <label>
-          <span class="label-text">Link outcome</span>
-          <select name="outcomeId">
-            <option value="">No link</option>
-            ${data.outcomes.map((o) => `<option value="${o.id}" ${task?.outcomeId === o.id ? "selected" : ""}>${escapeHtml(o.title)}</option>`).join("")}
+          <span class="label-text">Link to outcome <span class="required">*</span></span>
+          <select name="outcomeId" required ${!hasOutcomes ? "disabled" : ""}>
+            <option value="">${hasOutcomes ? "Choose an outcome..." : "Define an outcome first"}</option>
+            ${(data.outcomes || []).map((o) => `<option value="${o.id}" ${task?.outcomeId === o.id ? "selected" : ""}>${escapeHtml(o.title)}</option>`).join("")}
           </select>
         </label>
         <div class="modal-actions">
@@ -601,13 +648,17 @@ function renderModal() {
       e.preventDefault();
       const fd = new FormData(e.target);
       const title = String(fd.get("title") || "").trim();
-      const outcomeId = String(fd.get("outcomeId") || "") || null;
-      if (!title) return;
+      const outcomeId = String(fd.get("outcomeId") || "").trim() || null;
+      if (!title || !outcomeId) return;
 
+      const taskId = task?.id;
       withActiveUser((userData) => {
-        if (task) {
-          task.title = title;
-          task.outcomeId = outcomeId;
+        if (taskId) {
+          const t = userData.tasks.find((x) => x.id === taskId);
+          if (t) {
+            t.title = title;
+            t.outcomeId = outcomeId;
+          }
         } else {
           userData.tasks.unshift({ id: uid(), title, done: false, outcomeId, carriedOver: false });
         }
@@ -692,9 +743,53 @@ function renderModal() {
       const current = Number(fd.get("current") || 0);
       if (!title) return;
 
-      withActiveUser(() => {
-        outcome.title = title;
-        outcome.current = Math.max(0, Math.min(100, current));
+      const outcomeId = outcome.id;
+      withActiveUser((userData) => {
+        const o = userData.outcomes.find((x) => x.id === outcomeId);
+        if (o) {
+          o.title = title;
+          o.current = Math.max(0, Math.min(100, current));
+        }
+      });
+      closeModal();
+      render();
+    });
+  }
+
+  // Define Behavior
+  if (state.modal === "define-behavior") {
+    content.innerHTML = `
+      <div class="modal-head">
+        <div>
+          <div class="modal-icon behavior">!</div>
+          <h3>Add Critical Behavior</h3>
+        </div>
+        ${closeBtn}
+      </div>
+      <div class="modal-subhead">Behaviors you want to avoid or control</div>
+      <form id="define-behavior-form">
+        <label>
+          <span class="label-text">Behavior description</span>
+          <input name="title" required placeholder="e.g., Late-night screen time" />
+        </label>
+        <label>
+          <span class="label-text">Refined goal</span>
+          <textarea name="goal" required placeholder="e.g., No screens after 10pm"></textarea>
+        </label>
+        <button class="btn-primary" type="submit">+ Add Behavior</button>
+      </form>
+    `;
+
+    content.querySelector("#define-behavior-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const title = String(fd.get("title") || "").trim();
+      const goal = String(fd.get("goal") || "").trim();
+      if (!title || !goal) return;
+
+      withActiveUser((userData) => {
+        if (!userData.behaviors) userData.behaviors = [];
+        userData.behaviors.unshift({ id: uid(), title, goal });
       });
       closeModal();
       render();
@@ -793,9 +888,13 @@ function renderModal() {
     content.querySelector("#behavior-form").addEventListener("submit", (e) => {
       e.preventDefault();
       const fd = new FormData(e.target);
-      withActiveUser(() => {
-        behavior.title = String(fd.get("title") || "").trim();
-        behavior.goal = String(fd.get("goal") || "").trim();
+      const behaviorId = behavior.id;
+      withActiveUser((userData) => {
+        const b = userData.behaviors.find((x) => x.id === behaviorId);
+        if (b) {
+          b.title = String(fd.get("title") || "").trim();
+          b.goal = String(fd.get("goal") || "").trim();
+        }
       });
       closeModal();
       render();

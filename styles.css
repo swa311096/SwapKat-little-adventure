@@ -12,9 +12,14 @@
   --mint-dark: #47a369;
   --mint-soft: #ecf8f0;
   --lav: #9b8bc7;
+  --lav-dark: #8470b3;
   --lav-soft: #f5f2fb;
   --peach: #e8a87c;
+  --peach-dark: #d9935e;
   --peach-soft: #fdf6f1;
+  --slate: #6b8cae;
+  --slate-dark: #5a7a98;
+  --slate-soft: #eef4f9;
   --danger: #e57373;
   --danger-soft: #fdf4f4;
   --radius-sm: 8px;
@@ -72,8 +77,13 @@ a { color: var(--mint); text-decoration: none; font-weight: 500; }
   width: 88px;
   height: 88px;
   border-radius: 20px;
-  background: linear-gradient(145deg, var(--peach), #e8b894);
-  box-shadow: 0 4px 16px rgba(232, 168, 124, 0.25);
+  object-fit: contain;
+  background: linear-gradient(145deg, #f0f9f4, #fef9f5);
+}
+.brand-avatar.brand-logo {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
 }
 .login-branding h1 {
   font-size: 36px;
@@ -256,6 +266,12 @@ label { position: relative; }
   font-size: 12px;
   font-weight: 500;
 }
+.logo-img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: 8px;
+}
 .topbar h1 {
   font-size: 18px;
   font-weight: 600;
@@ -398,11 +414,39 @@ label { position: relative; }
   font-size: 10px;
   font-weight: 500;
   letter-spacing: 0.04em;
-  background: var(--mint);
   color: white;
   padding: 3px 8px;
   border-radius: 999px;
 }
+
+/* Card-specific colors */
+.goals-card .badge-active { background: var(--mint); }
+.goals-card .btn-add-circle { background: var(--mint); }
+.goals-card .btn-add-circle:hover { background: var(--mint-dark); }
+.goals-card .progress-bar-fill { background: var(--mint); }
+.goals-card .task-check.checked { background: var(--mint); border-color: var(--mint); }
+.goals-card .task-item { background: var(--mint-soft); border-color: rgba(92, 184, 122, 0.25); }
+.goals-card .task-item:hover { background: #e8f5ec; }
+
+.outcomes-card .badge-active { background: var(--lav); }
+.outcomes-card .btn-add-circle { background: var(--lav); }
+.outcomes-card .btn-add-circle:hover { background: var(--lav-dark); }
+.outcomes-card .progress-bar-fill { background: var(--lav); }
+.outcomes-card .task-item { background: var(--lav-soft); border-color: rgba(155, 139, 199, 0.2); }
+.outcomes-card .task-item:hover { background: #ebe6f5; }
+.outcomes-card .outcome-item.updated { border-color: rgba(155, 139, 199, 0.4); background: var(--lav-soft); }
+.outcomes-card .outcome-status.updated { color: var(--lav); }
+
+.behaviors-card .badge-active { background: var(--peach); }
+.behaviors-card .btn-add-circle { background: var(--peach); }
+.behaviors-card .btn-add-circle:hover { background: var(--peach-dark); }
+.behaviors-card .progress-bar-fill { background: var(--peach); }
+.behaviors-card .task-item { background: var(--peach-soft); border-color: rgba(232, 168, 124, 0.25); }
+.behaviors-card .task-item:hover { background: #fceee5; }
+.behaviors-card .breach-badge { background: rgba(232, 168, 124, 0.3); color: var(--ink-muted); }
+.behaviors-card .breach-badge:not([data-count="0"]) { background: rgba(220, 100, 100, 0.2); color: #c75b5b; }
+.behaviors-card .breach-btn { border-color: rgba(232, 168, 124, 0.5); color: var(--peach); background: var(--peach-soft); }
+.behaviors-card .breach-btn:hover:not(:disabled) { background: rgba(232, 168, 124, 0.25); border-color: var(--peach); }
 .badge-orange {
   background: var(--peach-soft);
   color: #9a5c3c;
@@ -560,49 +604,18 @@ label { position: relative; }
 .btn-dashed:hover { background: #f5f7fa; border-color: var(--line); color: var(--ink); }
 
 /* Outcomes */
-.outcome-list { max-height: 340px; overflow-y: auto; }
-.outcome-item {
-  padding: 12px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-md);
-  background: var(--card);
-  margin-bottom: 6px;
-}
+.outcome-list { max-height: 360px; overflow-y: auto; }
 .outcome-item.updated {
   border-color: rgba(92, 184, 122, 0.35);
   background: var(--mint-soft);
 }
-.outcome-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
-.outcome-title { font-weight: 500; font-size: 14px; margin-bottom: 6px; color: var(--ink); }
-.outcome-status {
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  margin-bottom: 4px;
-}
 .outcome-status.updated { color: var(--mint); }
 .outcome-status.complete { color: var(--ink-muted); }
-.outcome-bar { margin-bottom: 2px; }
-.outcome-pct { font-size: 12px; font-weight: 500; color: var(--ink-muted); }
-.outcome-item .task-actions button { padding: 4px 6px; font-size: 11px; }
 
 /* Behaviors */
-.behavior-list { max-height: 340px; overflow-y: auto; }
-.behavior-item {
-  padding: 12px;
-  border: 1px solid rgba(155, 139, 199, 0.2);
-  border-radius: var(--radius-md);
-  background: var(--lav-soft);
-  margin-bottom: 6px;
-}
-.behavior-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 10px;
-  margin-bottom: 2px;
-}
-.behavior-title { font-weight: 500; font-size: 14px; flex: 1; color: var(--ink); }
+.behavior-list { max-height: 360px; overflow-y: auto; }
+.behavior-item { background: var(--lav-soft); border-color: rgba(155, 139, 199, 0.2); }
+.behavior-goal { font-size: 12px; color: var(--ink-muted); }
 .breach-badge {
   flex-shrink: 0;
   font-size: 11px;
@@ -674,9 +687,9 @@ label { position: relative; }
   flex-shrink: 0;
   width: 100px;
   padding: 14px;
-  border: 1px solid var(--line);
+  border: 1px solid rgba(107, 140, 174, 0.25);
   border-radius: var(--radius-md);
-  background: #fafbfc;
+  background: var(--slate-soft);
   text-align: center;
 }
 .history-pill .label { font-size: 11px; font-weight: 500; color: var(--ink-muted); margin-bottom: 6px; }
@@ -684,7 +697,7 @@ label { position: relative; }
   font-size: 22px;
   font-weight: 600;
   letter-spacing: -0.02em;
-  color: var(--mint);
+  color: var(--slate);
 }
 .history-pill.na .score { color: var(--ink-muted); font-size: 14px; font-weight: 500; }
 .history-nav { display: flex; gap: 6px; margin-left: auto; }
@@ -692,14 +705,15 @@ label { position: relative; }
   width: 34px;
   height: 34px;
   border-radius: 8px;
-  border: 1px solid var(--line);
-  background: var(--card);
+  border: 1px solid rgba(107, 140, 174, 0.3);
+  background: var(--slate-soft);
   display: grid;
   place-items: center;
   cursor: pointer;
   font-size: 14px;
+  color: var(--slate);
 }
-.history-nav button:hover { background: #f5f7fa; }
+.history-nav button:hover { background: #dce8f2; color: var(--slate-dark); }
 
 .app-footer {
   display: flex;
