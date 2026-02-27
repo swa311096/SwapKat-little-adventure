@@ -180,9 +180,9 @@ function linkedOutcomeProgress(outcome, data) {
 }
 
 function outcomeStatusText(pct) {
-  if (pct >= 100) return "GOAL MET";
-  if (pct >= 70) return "PROGRESS UPDATED";
-  return `${pct}% COMPLETE`;
+  if (pct >= 100) return "Goal met";
+  if (pct >= 70) return "On track";
+  return `${pct}% complete`;
 }
 
 // Modal state via URL
@@ -304,7 +304,7 @@ function renderGoalsCard(data) {
     <div class="card-header">
       <div class="card-title">
         <h2>Weekly Goals</h2>
-        <span class="badge-active">ACTIVE</span>
+        <span class="badge-active">Active</span>
       </div>
       <button class="btn-add-circle" id="add-goal-btn" title="Add goal">+</button>
     </div>
@@ -320,7 +320,7 @@ function renderGoalsCard(data) {
       ${normal.map((t) => taskRow(t, data)).join("")}
       ${carried.length ? `
         <div class="section-divider">
-          <div class="section-label">UNFINISHED LAST WEEK</div>
+          <div class="section-label">Unfinished last week</div>
           ${carried.map((t) => taskRow(t, data, true)).join("")}
         </div>
       ` : ""}
@@ -441,16 +441,26 @@ function renderBehaviorsCard(data) {
     <div class="behavior-list">
       ${data.behaviors
         .map(
-          (b) => `
+          (b) => {
+            const breachCount = (data.behaviorLogs || []).filter((l) => l.behaviorId === b.id).length;
+            return `
         <div class="behavior-item">
-          <div class="behavior-title">${escapeHtml(b.title)}</div>
+          <div class="behavior-header">
+            <div class="behavior-title">${escapeHtml(b.title)}</div>
+            <div class="breach-control">
+              <button class="breach-btn breach-minus" data-remove-breach="${b.id}" title="Remove a breach" ${breachCount === 0 ? "disabled" : ""}>−</button>
+              <span class="breach-badge" data-count="${breachCount}" title="Times breached">${breachCount} breach${breachCount === 1 ? "" : "es"}</span>
+              <button class="breach-btn breach-add-btn" data-add-breach="${b.id}" title="Mark a breach">+</button>
+            </div>
+          </div>
           <div class="behavior-goal">Goal: ${escapeHtml(b.goal)}</div>
           <div class="task-actions" style="margin-top:10px;">
             <button data-edit-behavior="${b.id}">Edit</button>
             <button data-delete-behavior="${b.id}">Delete</button>
           </div>
         </div>
-      `
+      `;
+          }
         )
         .join("")}
     </div>
@@ -468,6 +478,34 @@ function renderBehaviorsCard(data) {
       withActiveUser((userData) => {
         userData.behaviors = userData.behaviors.filter((b) => b.id !== node.dataset.deleteBehavior);
         userData.behaviorLogs = userData.behaviorLogs.filter((l) => l.behaviorId !== node.dataset.deleteBehavior);
+      });
+      render();
+    });
+  });
+
+  el.querySelectorAll("[data-add-breach]").forEach((node) => {
+    node.addEventListener("click", () => {
+      const behaviorId = node.dataset.addBreach;
+      const now = new Date();
+      withActiveUser((userData) => {
+        userData.behaviorLogs.unshift({
+          id: uid(),
+          behaviorId,
+          date: now.toISOString().slice(0, 10),
+          time: now.toTimeString().slice(0, 5),
+          notes: ""
+        });
+      });
+      render();
+    });
+  });
+
+  el.querySelectorAll("[data-remove-breach]").forEach((node) => {
+    node.addEventListener("click", () => {
+      const behaviorId = node.dataset.removeBreach;
+      withActiveUser((userData) => {
+        const idx = userData.behaviorLogs.findIndex((l) => l.behaviorId === behaviorId);
+        if (idx >= 0) userData.behaviorLogs.splice(idx, 1);
       });
       render();
     });
@@ -539,14 +577,14 @@ function renderModal() {
         </div>
         ${closeBtn}
       </div>
-      <div class="modal-subhead">TASK LINKING</div>
+      <div class="modal-subhead">Link to an outcome</div>
       <form id="task-form">
         <label>
-          <span class="label-text">TASK DESCRIPTION</span>
+          <span class="label-text">Task description</span>
           <input name="title" required placeholder="e.g., Finalize project roadmap" value="${escapeHtml(task?.title || "")}" />
         </label>
         <label>
-          <span class="label-text">LINK OUTCOME</span>
+          <span class="label-text">Link outcome</span>
           <select name="outcomeId">
             <option value="">No link</option>
             ${data.outcomes.map((o) => `<option value="${o.id}" ${task?.outcomeId === o.id ? "selected" : ""}>${escapeHtml(o.title)}</option>`).join("")}
@@ -590,14 +628,14 @@ function renderModal() {
         </div>
         ${closeBtn}
       </div>
-      <div class="modal-subhead">BIG PICTURE GOALS</div>
+      <div class="modal-subhead">Big picture goals</div>
       <form id="outcome-form">
         <label>
-          <span class="label-text">OUTCOME NAME</span>
+          <span class="label-text">Outcome name</span>
           <input name="title" required placeholder="e.g., Master the new design system" />
         </label>
         <label>
-          <span class="label-text">SET TARGET GOAL (%)</span>
+          <span class="label-text">Target goal (%)</span>
           <input type="number" name="current" min="0" max="100" value="0" />
         </label>
         <button class="btn-primary" type="submit">+ Add Outcome</button>
@@ -633,14 +671,14 @@ function renderModal() {
         </div>
         ${closeBtn}
       </div>
-      <div class="modal-subhead">REFINE YOUR TARGETS</div>
+      <div class="modal-subhead">Refine your targets</div>
       <form id="outcome-form">
         <label>
-          <span class="label-text">OUTCOME NAME</span>
+          <span class="label-text">Outcome name</span>
           <input name="title" required value="${escapeHtml(outcome.title)}" />
         </label>
         <label>
-          <span class="label-text">SET TARGET GOAL (%)</span>
+          <span class="label-text">Target goal (%)</span>
           <input type="number" name="current" min="0" max="100" value="${pct}" />
         </label>
         <button class="btn-primary" type="submit">Save Changes</button>
@@ -673,10 +711,10 @@ function renderModal() {
         </div>
         ${closeBtn}
       </div>
-      <div class="modal-subhead">BEHAVIOR LOGGING</div>
+      <div class="modal-subhead">Log an occurrence</div>
       <form id="track-form">
         <label>
-          <span class="label-text">SELECT BEHAVIOR</span>
+          <span class="label-text">Select behavior</span>
           <select name="behaviorId" required>
             <option value="">Choose a critical behavior...</option>
             ${data.behaviors.map((b) => `<option value="${b.id}">${escapeHtml(b.title)}</option>`).join("")}
@@ -684,16 +722,16 @@ function renderModal() {
         </label>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
           <label>
-            <span class="label-text">DATE</span>
+            <span class="label-text">Date</span>
             <input type="date" name="date" required value="${new Date().toISOString().slice(0, 10)}" />
           </label>
           <label>
-            <span class="label-text">TIME</span>
+            <span class="label-text">Time</span>
             <input type="time" name="time" required value="14:30" />
           </label>
         </div>
         <label>
-          <span class="label-text">NOTES / REFLECTION</span>
+          <span class="label-text">Notes / reflection</span>
           <textarea name="notes" placeholder="How did this happen? What can we improve?"></textarea>
         </label>
         <div class="modal-actions">
@@ -737,14 +775,14 @@ function renderModal() {
         </div>
         ${closeBtn}
       </div>
-      <div class="modal-subhead">ADJUST YOUR HABITS</div>
+      <div class="modal-subhead">Adjust your habits</div>
       <form id="behavior-form">
         <label>
-          <span class="label-text">BEHAVIOR DESCRIPTION</span>
+          <span class="label-text">Behavior description</span>
           <input name="title" required value="${escapeHtml(behavior.title)}" />
         </label>
         <label>
-          <span class="label-text">REFINED GOAL</span>
+          <span class="label-text">Refined goal</span>
           <textarea name="goal" required>${escapeHtml(behavior.goal)}</textarea>
         </label>
         <p style="font-size:12px; color:var(--ink-muted); margin-top:-8px;">Make the goal specific and achievable</p>
