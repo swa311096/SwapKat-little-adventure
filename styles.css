@@ -749,6 +749,11 @@ label { position: relative; }
 }
 .history-nav button:hover { background: #dce8f2; color: var(--slate-dark); }
 
+/* Weekly Report */
+.report-card { border-color: rgba(107, 140, 174, 0.2); background: var(--slate-soft); }
+.report-card .btn-dashed { border-color: rgba(107, 140, 174, 0.3); color: var(--slate); }
+.report-card .btn-dashed:hover { background: #dce8f2; border-color: var(--slate); }
+
 .app-footer {
   display: flex;
   justify-content: space-between;

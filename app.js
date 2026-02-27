@@ -1,4 +1,4 @@
-const STORAGE_KEY = "swapkat-adventure-v3";
+const STORAGE_KEY = "swapkat-adventure-v4";
 const DATA_KEY = "swapkat_main";
 
 const app = document.getElementById("app");
@@ -48,82 +48,13 @@ function escapeHtml(str) {
 }
 
 function createSeedData(name, context) {
-  const isWork = context === "work";
-  const isKat = name === "Kat";
-  const baseOutcomes = isWork
-    ? [
-        { id: uid(), title: "Achieve 90% customer satisfaction score on new feature", target: 100, current: 85 },
-        { id: uid(), title: "Launch the mobile beta version to early adopters", target: 100, current: 40 },
-        { id: uid(), title: "Reduce page load time by 40% globally", target: 100, current: 100 }
-      ]
-    : [
-        { id: uid(), title: "Spend 5+ hours on creative hobbies weekly", target: 100, current: 60 },
-        { id: uid(), title: "Read 2 books per month", target: 100, current: 25 },
-        { id: uid(), title: "Morning routine before 8am", target: 100, current: 85 }
-      ];
-  const baseBehaviors = isWork
-    ? isKat
-      ? [
-          { id: uid(), title: "Over-perfecting designs", goal: "Ship at 80% and iterate." },
-          { id: uid(), title: "Context switching", goal: "Block 2h focus sessions." },
-          { id: uid(), title: "Skipping design reviews", goal: "Get feedback before handoff." }
-        ]
-      : [
-          { id: uid(), title: "Delayed Email Responses", goal: "Respond within 4 business hours." },
-          { id: uid(), title: "Multitasking in Meetings", goal: "Full focus, no external tabs." },
-          { id: uid(), title: "Vague Task Descriptions", goal: "Add clear DoD to every card." },
-          { id: uid(), title: "Skipping Morning Standups", goal: "100% attendance weekly." }
-        ]
-    : isKat
-      ? [
-          { id: uid(), title: "Saying yes to everything", goal: "Protect 2 free evenings/week." },
-          { id: uid(), title: "Skipping rest days", goal: "One full rest day per week." }
-        ]
-      : [
-          { id: uid(), title: "Late-night screen time", goal: "No screens after 10pm." },
-          { id: uid(), title: "Skipping workouts", goal: "3 sessions minimum per week." },
-          { id: uid(), title: "Impulse spending", goal: "24h wait before non-essential buys." }
-        ];
-  const tasks = isWork
-    ? isKat
-      ? [
-          { id: uid(), title: "Design sprint for new feature", done: true, outcomeId: baseOutcomes[0].id, carriedOver: false },
-          { id: uid(), title: "User research interviews", done: true, outcomeId: baseOutcomes[0].id, carriedOver: false },
-          { id: uid(), title: "Create Figma prototypes", done: false, outcomeId: baseOutcomes[1].id, carriedOver: false },
-          { id: uid(), title: "Stakeholder presentation", done: false, outcomeId: baseOutcomes[1].id, carriedOver: false },
-          { id: uid(), title: "Design system updates", done: false, outcomeId: baseOutcomes[2].id, carriedOver: true }
-        ]
-      : [
-          { id: uid(), title: "Complete Q4 project roadmap", done: true, outcomeId: baseOutcomes[0].id, carriedOver: false },
-          { id: uid(), title: "Bi-weekly client sync meeting", done: true, outcomeId: baseOutcomes[0].id, carriedOver: false },
-          { id: uid(), title: "Finalize hiring brief", done: false, outcomeId: baseOutcomes[0].id, carriedOver: false },
-          { id: uid(), title: "Update internal documentation", done: false, outcomeId: baseOutcomes[0].id, carriedOver: false },
-          { id: uid(), title: "Quarterly tax filing", done: false, outcomeId: baseOutcomes[0].id, carriedOver: true }
-        ]
-    : isKat
-      ? [
-          { id: uid(), title: "Yoga class 3x", done: true, outcomeId: baseOutcomes[0].id, carriedOver: false },
-          { id: uid(), title: "Meal prep for the week", done: false, outcomeId: baseOutcomes[0].id, carriedOver: false },
-          { id: uid(), title: "Photography project editing", done: false, outcomeId: baseOutcomes[0].id, carriedOver: false },
-          { id: uid(), title: "Friend catch-up call", done: false, outcomeId: baseOutcomes[0].id, carriedOver: true }
-        ]
-      : [
-          { id: uid(), title: "Gym 3x this week", done: true, outcomeId: baseOutcomes[1].id, carriedOver: false },
-          { id: uid(), title: "Finish current book", done: false, outcomeId: baseOutcomes[1].id, carriedOver: false },
-          { id: uid(), title: "Plan weekend hike", done: false, outcomeId: baseOutcomes[0].id, carriedOver: false },
-          { id: uid(), title: "Call family", done: false, outcomeId: baseOutcomes[0].id, carriedOver: true }
-        ];
   return {
     weekLabel: getThisWeekLabel(),
-    tasks,
-    outcomes: baseOutcomes,
-    behaviors: baseBehaviors,
+    tasks: [],
+    outcomes: [],
+    behaviors: [],
     behaviorLogs: [],
-    history: [
-      { label: "Oct 16", score: isWork ? (isKat ? 88 : 90) : (isKat ? 72 : 78) },
-      { label: "Oct 09", score: isWork ? (isKat ? 65 : 75) : (isKat ? 90 : 82) },
-      { label: "Oct 02", score: null }
-    ],
+    history: [],
     name
   };
 }
@@ -146,6 +77,8 @@ function getSupabase() {
 
 function processState(state) {
   if (!state.currentContext) state.currentContext = "work";
+  if (!state.sheetsExportUrl) state.sheetsExportUrl = "";
+  if (!state.sheetsSecret) state.sheetsSecret = "";
   if (!state.users || !state.users.Swapnil || !state.users.Swapnil.work) {
     state.users = {
       Swapnil: { personal: createSeedData("Swapnil", "personal"), work: createSeedData("Swapnil", "work") },
@@ -165,6 +98,8 @@ function createSeedState() {
   return {
     currentUser: null,
     currentContext: "work",
+    sheetsExportUrl: "",
+    sheetsSecret: "",
     users: {
       Swapnil: { personal: createSeedData("Swapnil", "personal"), work: createSeedData("Swapnil", "work") },
       Kat: { personal: createSeedData("Kat", "personal"), work: createSeedData("Kat", "work") }
@@ -369,6 +304,7 @@ function renderDashboard() {
   renderOutcomesCard(data);
   renderBehaviorsCard(data);
   renderHistoryCard(data);
+  renderWeeklyReportCard(data);
 }
 
 function renderGoalsCard(data) {
@@ -644,6 +580,51 @@ function renderHistoryCard(data) {
         .join("")}
     </div>
   `;
+}
+
+function renderWeeklyReportCard(data) {
+  const el = document.getElementById("report-card");
+  const state = loadDB();
+  el.innerHTML = `
+    <div class="card-header">
+      <div class="card-title">
+        <h2>Weekly Report</h2>
+      </div>
+    </div>
+    <p class="subtitle" style="margin-bottom:12px;">Export this week's summary to Google Sheets to track progress over time</p>
+    <button class="btn-dashed" id="export-sheets-btn">Export to Google Sheets</button>
+  `;
+  el.querySelector("#export-sheets-btn").addEventListener("click", () => setModal({ modal: "export-sheets" }));
+}
+
+function buildWeeklyReportPayload(data, whatWentWell, whatToImprove) {
+  const state = loadDB();
+  const progress = computeTaskProgress(data.tasks);
+  const normal = data.tasks.filter((t) => !t.carriedOver);
+  const tasksDone = normal.filter((t) => t.done).length;
+  const outcomesSummary = (data.outcomes || [])
+    .map((o) => {
+      const pct = linkedOutcomeProgress(o, data);
+      return `${o.title}: ${pct}%`;
+    })
+    .join("; ") || "—";
+  const breachesByBehavior = (data.behaviors || []).map((b) => {
+    const c = (data.behaviorLogs || []).filter((l) => l.behaviorId === b.id).length;
+    return c > 0 ? `${b.title} (${c})` : null;
+  }).filter(Boolean);
+  const breachesSummary = breachesByBehavior.length ? breachesByBehavior.join("; ") : "0";
+  return {
+    token: state.sheetsSecret || undefined,
+    week: data.weekLabel,
+    user: state.currentUser || "",
+    context: state.currentContext || "work",
+    taskCompletion: progress,
+    tasksDone: `${tasksDone}/${normal.length}`,
+    outcomesSummary,
+    breachesSummary,
+    whatWentWell: (whatWentWell || "").trim(),
+    whatToImprove: (whatToImprove || "").trim()
+  };
 }
 
 // Modals
@@ -954,6 +935,103 @@ function renderModal() {
       closeModal();
       render();
     });
+  }
+
+  // Export to Google Sheets
+  if (state.modal === "export-sheets") {
+    const appState = loadDB();
+    const url = appState.sheetsExportUrl || "";
+    content.innerHTML = `
+      <div class="modal-head">
+        <div>
+          <div class="modal-icon outcome">📊</div>
+          <h3>Export Weekly Report</h3>
+        </div>
+        ${closeBtn}
+      </div>
+      <div class="modal-subhead">Send this week's summary to your Google Sheet</div>
+      <form id="export-sheets-form">
+        <label>
+          <span class="label-text">Web App URL <span class="required">*</span></span>
+          <input name="sheetsUrl" required placeholder="https://script.google.com/macros/s/.../exec" value="${escapeHtml(url)}" />
+          <p style="font-size:11px; color:var(--ink-muted); margin-top:4px;">See SHEETS_SETUP.md for setup instructions</p>
+        </label>
+        <label>
+          <span class="label-text">Secret token (optional)</span>
+          <input name="sheetsSecret" type="password" placeholder="Leave empty if not set" value="${escapeHtml(appState.sheetsSecret || "")}" />
+        </label>
+        <label>
+          <span class="label-text">What went well?</span>
+          <textarea name="whatWentWell" placeholder="e.g., Completed 3 big tasks, stayed focused on outcomes"></textarea>
+        </label>
+        <label>
+          <span class="label-text">What to improve?</span>
+          <textarea name="whatToImprove" placeholder="e.g., Too many context switches, need better planning"></textarea>
+        </label>
+        <div class="modal-actions">
+          <button class="btn-primary" type="submit" id="export-submit">Export to Sheet</button>
+          <button class="btn-ghost" type="button" id="export-cancel">Cancel</button>
+        </div>
+      </form>
+      <div id="export-status" style="display:none; margin-top:12px; font-size:13px; color:var(--mint);"></div>
+    `;
+
+    content.querySelector("#export-sheets-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const sheetsUrl = String(fd.get("sheetsUrl") || "").trim();
+      const sheetsSecret = String(fd.get("sheetsSecret") || "").trim();
+      const whatWentWell = String(fd.get("whatWentWell") || "");
+      const whatToImprove = String(fd.get("whatToImprove") || "");
+      if (!sheetsUrl) return;
+
+      const state = loadDB();
+      state.sheetsExportUrl = sheetsUrl;
+      state.sheetsSecret = sheetsSecret;
+      saveDB(state);
+
+      const payload = buildWeeklyReportPayload(data, whatWentWell, whatToImprove);
+      const statusEl = content.querySelector("#export-status");
+      const submitBtn = content.querySelector("#export-submit");
+
+      submitBtn.disabled = true;
+      statusEl.style.display = "block";
+      statusEl.textContent = "Exporting...";
+
+      try {
+        const res = await fetch(sheetsUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const result = await res.json().catch(() => ({}));
+        if (result.success) {
+          statusEl.textContent = "✓ Exported! Check your Google Sheet.";
+          statusEl.style.color = "var(--mint)";
+        } else {
+          statusEl.textContent = result.error || "Export failed. Check URL and try again.";
+          statusEl.style.color = "var(--danger)";
+        }
+      } catch (err) {
+        statusEl.textContent = "Could not connect. Try form export below.";
+        statusEl.style.color = "var(--peach)";
+        const form = document.createElement("form");
+        form.method = "POST";
+        form.action = sheetsUrl;
+        form.target = "_blank";
+        form.style.display = "none";
+        const input = document.createElement("input");
+        input.name = "data";
+        input.value = JSON.stringify(payload);
+        form.appendChild(input);
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+      }
+      submitBtn.disabled = false;
+    });
+
+    content.querySelector("#export-cancel")?.addEventListener("click", closeModal);
   }
 
   // Delete Confirm
