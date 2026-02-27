@@ -31,6 +31,7 @@
 }
 
 * { box-sizing: border-box; }
+html { overflow-x: hidden; }
 body {
   margin: 0;
   min-height: 100vh;
@@ -39,10 +40,21 @@ body {
   color: var(--ink);
   background: radial-gradient(circle at 1px 1px, var(--bg-dots) 1px, transparent 0) 0 0/28px 28px, var(--bg);
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  width: 100%;
 }
 
 h1, h2, h3, h4, p { margin: 0; }
 button, input, select, textarea { font: inherit; font-family: inherit; }
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  font-size: 16px;
+  color: var(--ink-muted);
+}
 button { cursor: pointer; border: 0; background: none; }
 a { color: var(--mint); text-decoration: none; font-weight: 500; }
 
@@ -233,16 +245,20 @@ label { position: relative; }
 }
 
 /* Dashboard */
+#app { width: 100%; overflow-x: hidden; }
 .dashboard {
   max-width: 1200px;
   margin: 0 auto;
   padding: 24px 20px 48px;
+  width: 100%;
+  min-width: 0;
 }
 .topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  flex-wrap: wrap;
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
@@ -254,6 +270,13 @@ label { position: relative; }
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.logo h1 {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .logo-icon {
   width: 32px;
@@ -271,6 +294,7 @@ label { position: relative; }
   height: 40px;
   object-fit: contain;
   border-radius: 8px;
+  flex-shrink: 0;
 }
 .topbar h1 {
   font-size: 18px;
@@ -345,6 +369,7 @@ label { position: relative; }
 
 .user-selector {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 18px;
 }
@@ -385,8 +410,10 @@ label { position: relative; }
   grid-template-columns: repeat(3, 1fr);
   gap: 14px;
   margin-bottom: 14px;
+  min-width: 0;
 }
 .card {
+  min-width: 0;
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
@@ -398,17 +425,22 @@ label { position: relative; }
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 14px;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 .card-title {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
 }
 .card-title h2 {
   font-size: 16px;
   font-weight: 600;
   letter-spacing: -0.01em;
   color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .badge-active {
   font-size: 10px;
@@ -499,6 +531,7 @@ label { position: relative; }
   border-radius: var(--radius-md);
   border: 1px solid var(--line);
   margin-bottom: 14px;
+  min-width: 0;
 }
 .progress-num {
   font-size: 28px;
@@ -510,6 +543,7 @@ label { position: relative; }
 .progress-num span { font-size: 16px; color: var(--ink-muted); font-weight: 500; }
 .progress-bar {
   flex: 1;
+  min-width: 0;
   height: 8px;
   border-radius: 999px;
   background: var(--line);
@@ -552,8 +586,8 @@ label { position: relative; }
   color: white;
 }
 .task-check svg { width: 12px; height: 12px; }
-.task-content { flex: 1; min-width: 0; }
-.task-title { font-weight: 500; font-size: 14px; color: var(--ink); }
+.task-content { flex: 1; min-width: 0; overflow: hidden; }
+.task-title { font-weight: 500; font-size: 14px; color: var(--ink); word-wrap: break-word; overflow-wrap: break-word; }
 .task-sub { font-size: 12px; color: var(--ink-muted); margin-top: 2px; font-weight: 400; }
 .task-actions { display: flex; gap: 4px; }
 .task-actions button {
@@ -844,10 +878,34 @@ label { position: relative; }
   .main-grid { grid-template-columns: 1fr; }
   .login-card { grid-template-columns: 1fr; }
   .login-branding { padding: 36px 20px; }
+  .dashboard { padding: 16px 14px 32px; }
 }
 @media (max-width: 768px) {
-  .topbar { flex-wrap: wrap; }
-  .nav-tabs { order: 3; width: 100%; }
+  .topbar { flex-wrap: wrap; gap: 12px; padding: 12px 14px; }
+  .topbar .logo h1 { font-size: 16px; max-width: 180px; }
+  .topbar-right { flex-wrap: wrap; }
+  .nav-tabs { order: 3; width: 100%; justify-content: center; }
   .sync-status { display: none; }
   .history-row { flex-wrap: wrap; }
+  .dashboard { padding: 12px 10px 24px; }
+  .card { padding: 14px; }
+  .btn-logout { padding: 6px 10px; font-size: 12px; }
+  .user-pill { padding: 8px 12px; font-size: 13px; }
+  .history-card h2 { font-size: 15px; }
+  .history-card .subtitle { font-size: 12px; }
+  .app-footer { flex-direction: column; align-items: center; gap: 8px; text-align: center; }
+}
+@media (max-width: 480px) {
+  .topbar .logo h1 { font-size: 14px; max-width: 140px; }
+  .logo-img { width: 32px; height: 32px; }
+  .dashboard { padding: 10px 8px 20px; }
+  .card { padding: 12px; }
+  .card-title h2 { font-size: 14px; }
+  .progress-num { font-size: 24px; }
+  .progress-num span { font-size: 14px; }
+  .task-item { padding: 8px 10px; }
+  .task-actions button { padding: 4px 6px; font-size: 10px; }
+  .btn-add-circle { width: 32px; height: 32px; font-size: 18px; }
+  .history-pill { width: 80px; padding: 10px; }
+  .history-pill .score { font-size: 18px; }
 }

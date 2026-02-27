@@ -1,4 +1,5 @@
 const STORAGE_KEY = "swapkat-adventure-v3";
+const DATA_KEY = "swapkat_main";
 
 const app = document.getElementById("app");
 const loginTemplate = document.getElementById("login-template");
@@ -127,31 +128,41 @@ function createSeedData(name, context) {
   };
 }
 
-function loadDB() {
-  const saved = localStorage.getItem(STORAGE_KEY);
-  if (saved) {
-    const parsed = JSON.parse(saved);
-    if (!parsed.currentContext) {
-      parsed.currentContext = "work";
-      if (parsed.users?.Swapnil && !parsed.users.Swapnil.work) {
-        parsed.users = {
-          Swapnil: { personal: createSeedData("Swapnil", "personal"), work: createSeedData("Swapnil", "work") },
-          Kat: { personal: createSeedData("Kat", "personal"), work: createSeedData("Kat", "work") }
-        };
-      }
-      saveDB(parsed);
-    }
-    // Auto-roll week: pending tasks from last week become this week's tasks
-    let changed = false;
-    Object.keys(parsed.users || {}).forEach((user) => {
-      const u = parsed.users[user];
-      if (u?.personal && rollWeekIfNeeded(u.personal)) changed = true;
-      if (u?.work && rollWeekIfNeeded(u.work)) changed = true;
-    });
-    if (changed) saveDB(parsed);
-    return parsed;
+function isSupabaseConfigured() {
+  return (
+    window.SUPABASE_URL &&
+    window.SUPABASE_ANON_KEY &&
+    window.SUPABASE_URL.includes("supabase.co") &&
+    window.SUPABASE_ANON_KEY.length > 20
+  );
+}
+
+function getSupabase() {
+  if (!window._supabaseClient) {
+    window._supabaseClient = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
   }
-  const seed = {
+  return window._supabaseClient;
+}
+
+function processState(state) {
+  if (!state.currentContext) state.currentContext = "work";
+  if (!state.users || !state.users.Swapnil || !state.users.Swapnil.work) {
+    state.users = {
+      Swapnil: { personal: createSeedData("Swapnil", "personal"), work: createSeedData("Swapnil", "work") },
+      Kat: { personal: createSeedData("Kat", "personal"), work: createSeedData("Kat", "work") }
+    };
+  }
+  let changed = false;
+  Object.keys(state.users || {}).forEach((user) => {
+    const u = state.users[user];
+    if (u?.personal && rollWeekIfNeeded(u.personal)) changed = true;
+    if (u?.work && rollWeekIfNeeded(u.work)) changed = true;
+  });
+  return changed;
+}
+
+function createSeedState() {
+  return {
     currentUser: null,
     currentContext: "work",
     users: {
@@ -159,12 +170,56 @@ function loadDB() {
       Kat: { personal: createSeedData("Kat", "personal"), work: createSeedData("Kat", "work") }
     }
   };
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(seed));
-  return seed;
+}
+
+let memoryCache = null;
+
+window.swapkatDbReady = (async function () {
+  if (isSupabaseConfigured()) {
+    try {
+      const { data, error } = await getSupabase().from("app_data").select("data").eq("key", DATA_KEY).single();
+      if (error && error.code !== "PGRST116") throw error;
+      memoryCache = data?.data ? data.data : createSeedState();
+    } catch (e) {
+      console.error("Supabase load failed, using localStorage", e);
+      memoryCache = null;
+    }
+  }
+  if (!memoryCache) {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    memoryCache = saved ? JSON.parse(saved) : createSeedState();
+  }
+  if (processState(memoryCache)) {
+    if (isSupabaseConfigured()) {
+      try {
+        await getSupabase().from("app_data").upsert({ key: DATA_KEY, data: memoryCache, updated_at: new Date().toISOString() }, { onConflict: "key" });
+      } catch (e) {
+        console.error("Supabase save failed", e);
+      }
+    } else {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(memoryCache));
+    }
+  }
+})();
+
+function loadDB() {
+  if (memoryCache) return memoryCache;
+  const saved = localStorage.getItem(STORAGE_KEY);
+  return saved ? JSON.parse(saved) : createSeedState();
 }
 
 function saveDB(db) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+  memoryCache = db;
+  if (isSupabaseConfigured()) {
+    getSupabase()
+      .from("app_data")
+      .upsert({ key: DATA_KEY, data: db, updated_at: new Date().toISOString() }, { onConflict: "key" })
+      .then(({ error }) => {
+        if (error) console.error("Supabase save failed", error);
+      });
+  } else {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+  }
 }
 
 function getActiveUserData() {
@@ -937,4 +992,3 @@ function renderModal() {
 }
 
 window.addEventListener("popstate", () => renderModal());
-render();

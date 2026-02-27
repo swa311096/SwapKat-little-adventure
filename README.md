@@ -4,9 +4,9 @@ Outcomes are achieved with consistent behavior around right tasks. I created thi
 
 ## How it works
 
-- **Outcomes** — The big-picture goals you want to achieve
-- **Tasks** — The right work that moves you toward those outcomes (link tasks to outcomes)
-- **Behaviors** — The habits you need to show up consistently; track when they slip
+- **Outcomes** — The big-picture goals you want to achieve on a weekly basis
+- **Tasks** — Set of tasks that moves you toward those outcomes (link tasks to outcomes)
+- **Behaviors** — The habits you need to weed out consistently; track when they slip
 
 ## Features
 
@@ -21,12 +21,21 @@ Outcomes are achieved with consistent behavior around right tasks. I created thi
 ## Tech Stack
 
 - Vanilla HTML, CSS, and JavaScript
-- Local Storage for persistence
-- No build step or dependencies
+- **Local Storage** (default) or **Supabase** for cloud persistence — both Kat and Swapnil can access from any device
+- No build step
 
 ## Getting Started
 
-### Run locally
+### Option A: Cloud sync (Supabase) — for both of you to access anywhere
+
+1. Create a free project at [supabase.com](https://supabase.com)
+2. In the SQL Editor, run the contents of `supabase/schema.sql`
+3. Go to Project Settings → API, copy the **Project URL** and **anon public** key
+4. Copy `supabase-config.example.js` to `supabase-config.js` and paste your URL and key
+5. Deploy to [Vercel](https://vercel.com) (connect your GitHub repo) or any static host
+6. Both of you can now access the app from the same URL with shared data
+
+### Option B: Run locally (localStorage)
 
 1. Clone the repo:
    ```bash
