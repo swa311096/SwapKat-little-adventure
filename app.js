@@ -1,12 +1,16 @@
 const STORAGE_KEY = "swapkat-adventure-v4";
 const DATA_KEY = "swapkat_main";
 
+// Email whitelist: only these emails can access. Maps to user.
+const ALLOWED_EMAILS = {
+  "kumarswausc@gmail.com": "Swapnil",
+  "tanguye1@gmail.com": "Kat"
+};
+
 const app = document.getElementById("app");
 const loginTemplate = document.getElementById("login-template");
 const dashboardTemplate = document.getElementById("dashboard-template");
 const modalTemplate = document.getElementById("modal-template");
-
-let selectedLoginUser = "Swapnil";
 
 function uid() {
   return Math.random().toString(36).slice(2, 9);
@@ -259,26 +263,25 @@ function renderLogin() {
   app.appendChild(loginTemplate.content.cloneNode(true));
 
   const form = document.getElementById("login-form");
-  form.querySelectorAll("[data-login-user]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      selectedLoginUser = btn.dataset.loginUser;
-      form.querySelectorAll("[data-login-user]").forEach((b) => {
-        b.classList.remove("selected");
-        b.style.borderColor = "";
-      });
-      btn.classList.add("selected");
-      btn.style.borderColor = btn.dataset.loginUser === "Swapnil" ? "var(--mint)" : "var(--lav)";
-    });
-  });
-  form.querySelector("[data-login-user='Swapnil']").classList.add("selected");
-  form.querySelector("[data-login-user='Swapnil']").style.borderColor = "var(--mint)";
+  const emailInput = document.getElementById("login-email");
+  const errorEl = document.getElementById("login-error");
 
   form.addEventListener("submit", (e) => {
     e.preventDefault();
-    const state = loadDB();
-    state.currentUser = selectedLoginUser;
-    saveDB(state);
-    render();
+    const email = String(emailInput?.value || "").trim().toLowerCase();
+    errorEl.style.display = "none";
+    errorEl.textContent = "";
+
+    const user = ALLOWED_EMAILS[email];
+    if (user) {
+      const state = loadDB();
+      state.currentUser = user;
+      saveDB(state);
+      render();
+    } else {
+      errorEl.textContent = "This email doesn't have access.";
+      errorEl.style.display = "block";
+    }
   });
 }
 

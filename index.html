@@ -30,33 +30,19 @@
         </section>
         <section class="login-form-section">
           <h2>Welcome Back</h2>
-          <p class="login-subhead">Please enter your details to stay tracked.</p>
+          <p class="login-subhead">Enter your email to access SwapKat's Adventure.</p>
           <form id="login-form">
             <label>
               <span class="label-text">Email address</span>
-              <input type="email" placeholder="us@adventure.com" />
+              <input type="email" id="login-email" placeholder="you@example.com" required autocomplete="email" />
             </label>
-            <label>
-              <span class="label-text">Password</span>
-              <input type="password" placeholder="••••••••" />
-              <a href="#" class="forgot-link">Forgot?</a>
-            </label>
-            <div class="user-picks">
-              <button type="button" data-login-user="Swapnil" class="user-pick">
-                <span class="user-avatar swapnil"></span>
-                <span>Login as Swapnil</span>
-              </button>
-              <button type="button" data-login-user="Kat" class="user-pick">
-                <span class="user-avatar kat"></span>
-                <span>Login as Kat</span>
-              </button>
-            </div>
+            <div id="login-error" class="login-error" style="display:none;"></div>
             <button type="submit" class="btn-primary btn-login">
-              Login to Dashboard
+              Enter
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </button>
           </form>
-          <p class="login-footer">Not part of the adventure? <a href="#">Request Access</a></p>
+          <p class="login-footer">Not part of the adventure? Access is by invitation only.</p>
         </section>
       </div>
     </main>

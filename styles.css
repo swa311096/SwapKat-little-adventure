@@ -169,6 +169,12 @@ a { color: var(--mint); text-decoration: none; font-weight: 500; }
   border-color: var(--mint);
   box-shadow: 0 0 0 2px var(--mint-soft);
 }
+.login-error {
+  font-size: 13px;
+  color: var(--danger);
+  margin-top: 8px;
+  font-weight: 500;
+}
 label { position: relative; }
 .forgot-link {
   position: absolute;
