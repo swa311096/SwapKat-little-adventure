@@ -36,15 +36,18 @@ function doPost(e) {
   let result = { success: false, error: null };
 
   try {
-    const raw = e.postData ? e.postData.contents : (e.parameter && e.parameter.data);
+    let raw = e.postData ? e.postData.contents : (e.parameter && e.parameter.data);
     if (!raw) {
       result.error = 'No data received';
-      return jsonResponse(result, 400);
+      return jsonResponse(result);
+    }
+    if (typeof raw === 'string' && raw.indexOf('data=') === 0) {
+      raw = decodeURIComponent(raw.substring(5).replace(/\+/g, ' '));
     }
     const data = JSON.parse(raw);
     if (SECRET && data.token !== SECRET) {
       result.error = 'Invalid token';
-      return jsonResponse(result, 401);
+      return jsonResponse(result);
     }
 
     const user = String(data.user || '').trim() || 'Unknown';
@@ -70,7 +73,7 @@ function doPost(e) {
     result.success = true;
   } catch (err) {
     result.error = err.toString();
-    return jsonResponse(result, 500);
+    return jsonResponse(result);
   }
 
   return jsonResponse(result);
