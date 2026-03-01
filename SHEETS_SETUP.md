@@ -6,10 +6,11 @@ Follow these steps to send your weekly SwapKat reports to a Google Sheet.
 
 1. Go to [sheets.google.com](https://sheets.google.com) and create a new spreadsheet
 2. Name it e.g. "SwapKat Weekly Reports"
-3. In row 1, add these headers (each in its own column):
-
-   | Week | User | Context | Goals % | Outcomes % | Behaviors Breached | What went well | What to improve |
-   |------|------|---------|---------|------------|---------------------|----------------|-----------------|
+3. No manual setup needed — the Apps Script will create 4 tabs automatically:
+   - **Swapnil Work**
+   - **Swapnil Personal**
+   - **Kat Work**
+   - **Kat Personal**
 
 ## 2. Add the Apps Script
 
@@ -19,8 +20,19 @@ Follow these steps to send your weekly SwapKat reports to a Google Sheet.
 ```javascript
 const SECRET = ''; // Optional: set a password like 'mySecret123' - must match SwapKat config
 
+const HEADERS = ['Week', 'Goals %', 'Outcomes %', 'Behaviors Breached', 'What went well', 'What to improve'];
+
+function getOrCreateSheet(ss, sheetName) {
+  let sheet = ss.getSheetByName(sheetName);
+  if (!sheet) {
+    sheet = ss.insertSheet(sheetName);
+    sheet.appendRow(HEADERS);
+    sheet.getRange(1, 1, 1, HEADERS.length).setFontWeight('bold');
+  }
+  return sheet;
+}
+
 function doPost(e) {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   let result = { success: false, error: null };
 
   try {
@@ -35,20 +47,25 @@ function doPost(e) {
       return jsonResponse(result, 401);
     }
 
+    const user = String(data.user || '').trim() || 'Unknown';
+    const context = String(data.context || '').trim() || 'work';
+    const sheetName = user + ' ' + (context.charAt(0).toUpperCase() + context.slice(1));
+
     const behaviorsBreachedStr = typeof data.behaviorsBreached === 'object'
       ? JSON.stringify(data.behaviorsBreached || {})
       : (data.behaviorsBreached || '{}');
 
     const row = [
       data.week || '',
-      data.user || '',
-      data.context || '',
       data.goalsAchievedPct ?? '',
       data.outcomesAchievedPct ?? '',
       behaviorsBreachedStr,
       data.whatWentWell || '',
       data.whatToImprove || ''
     ];
+
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = getOrCreateSheet(ss, sheetName);
     sheet.appendRow(row);
     result.success = true;
   } catch (err) {
@@ -65,6 +82,8 @@ function jsonResponse(obj) {
   return output;
 }
 ```
+
+**Note:** For existing sheets with the old structure (User + Context columns), you can either start fresh or manually add the 4 tabs. New appends will use the 4-sheet layout.
 
 3. *(Optional)* Set a `SECRET` on line 2 and remember it — you'll enter it in SwapKat too
 4. Click **Save** (disk icon), name the project "SwapKat Receiver"
@@ -89,8 +108,8 @@ function jsonResponse(obj) {
 ## 5. Export each week (manual)
 
 1. Fill in "What went well?" and "What to improve?" (optional)
-2. Click **Export**
-3. A new row will appear in your Google Sheet
+2. Click **Export** (or click the current-week history pill)
+3. A new row will appear in the correct tab (e.g. Swapnil Work, Kat Personal)
 
 ---
 
@@ -120,7 +139,8 @@ The app can automatically append all reports to your Google Sheet every Sunday a
 
 - The cron runs **every Sunday at 23:00 UTC** (11 PM UTC)
 - It fetches the latest data from Supabase
-- For each user (Swapnil, Kat) and context (personal, work), it appends one row to your sheet
+- For each user (Swapnil, Kat) and context (personal, work), it appends one row to the matching tab
+- **Swapnil Work** → Swapnil Work tab, **Kat Personal** → Kat Personal tab, etc.
 - The sheet URL and secret token are read from your app data (stored when you configured Export to Google Sheets)
 
 ### Notes
