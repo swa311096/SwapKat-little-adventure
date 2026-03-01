@@ -843,6 +843,11 @@ label { position: relative; }
   font-size: 18px;
 }
 .modal-close:hover { background: #f5f7fa; color: var(--ink); }
+.modal-error {
+  font-size: 13px;
+  color: var(--danger);
+  font-weight: 500;
+}
 .modal form { display: grid; gap: 14px; }
 .modal label { display: block; }
 .modal input, .modal select, .modal textarea {

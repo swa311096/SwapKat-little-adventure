@@ -730,6 +730,7 @@ function renderModal() {
             ${(data.outcomes || []).map((o) => `<option value="${o.id}" ${task?.outcomeId === o.id ? "selected" : ""}>${escapeHtml(o.title)}</option>`).join("")}
           </select>
         </label>
+        <div id="task-form-error" class="modal-error" style="display:none;"></div>
         <div class="modal-actions">
           <button class="btn-primary" type="submit">${task ? "Save Task" : "Add Task"}</button>
           <button class="btn-ghost" type="button" id="cancel-task">Cancel</button>
@@ -737,12 +738,26 @@ function renderModal() {
       </form>
     `;
 
-    content.querySelector("#task-form").addEventListener("submit", (e) => {
+    const formEl = content.querySelector("#task-form");
+    const errorEl = content.querySelector("#task-form-error");
+    formEl.addEventListener("submit", (e) => {
       e.preventDefault();
       const fd = new FormData(e.target);
       const title = String(fd.get("title") || "").trim();
       const outcomeId = String(fd.get("outcomeId") || "").trim() || null;
-      if (!title || !outcomeId) return;
+
+      errorEl.style.display = "none";
+      errorEl.textContent = "";
+      if (!title) {
+        errorEl.textContent = "Please enter a task description.";
+        errorEl.style.display = "block";
+        return;
+      }
+      if (!outcomeId) {
+        errorEl.textContent = "Please select an outcome to link this task to.";
+        errorEl.style.display = "block";
+        return;
+      }
 
       const taskId = task?.id;
       withActiveUser((userData) => {
