@@ -197,6 +197,26 @@ function outcomeStatusText(pct) {
   return `${pct}% complete`;
 }
 
+// Topbar handlers - exposed globally for inline onclick (reliable across environments)
+window.swapkatSetContext = function (ctx) {
+  const next = loadDB();
+  next.currentContext = ctx;
+  saveDB(next);
+  render();
+};
+window.swapkatSetUser = function (user) {
+  const next = loadDB();
+  next.currentUser = user;
+  saveDB(next);
+  render();
+};
+window.swapkatLogout = function () {
+  const next = loadDB();
+  next.currentUser = null;
+  saveDB(next);
+  render();
+};
+
 // Modal state via URL
 function setModal(params = null) {
   const url = new URL(window.location.href);
@@ -1105,31 +1125,28 @@ function renderModal() {
 
 window.addEventListener("popstate", () => renderModal());
 
-// Document-level click delegation for topbar (works even if elements are recreated or covered)
-document.addEventListener("click", (e) => {
-  const tabBtn = e.target.closest("[data-tab]");
+// Topbar clicks: use CAPTURE phase so we receive events before any overlay/interceptor
+function handleTopbarClick(e) {
+  const el = e.target && e.target.nodeType === 1 ? e.target : (e.target && e.target.parentElement);
+  if (!el || !el.closest) return;
+  const tabBtn = el.closest("[data-tab]");
   if (tabBtn) {
     e.preventDefault();
-    const next = loadDB();
-    next.currentContext = tabBtn.dataset.tab;
-    saveDB(next);
-    render();
+    e.stopPropagation();
+    window.swapkatSetContext(tabBtn.dataset.tab);
     return;
   }
-  const userBtn = e.target.closest("[data-user]");
+  const userBtn = el.closest("[data-user]");
   if (userBtn) {
     e.preventDefault();
-    const next = loadDB();
-    next.currentUser = userBtn.dataset.user;
-    saveDB(next);
-    render();
+    e.stopPropagation();
+    window.swapkatSetUser(userBtn.dataset.user);
     return;
   }
-  if (e.target.closest("#logout-btn")) {
+  if (el.closest("#logout-btn")) {
     e.preventDefault();
-    const next = loadDB();
-    next.currentUser = null;
-    saveDB(next);
-    render();
+    e.stopPropagation();
+    window.swapkatLogout();
   }
-});
+}
+document.addEventListener("click", handleTopbarClick, true);
