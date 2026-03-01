@@ -36,13 +36,18 @@ function doPost(e) {
   let result = { success: false, error: null };
 
   try {
-    let raw = e.postData ? e.postData.contents : (e.parameter && e.parameter.data);
+    let raw = (e.parameter && e.parameter.data) || (e.postData && e.postData.contents);
     if (!raw) {
       result.error = 'No data received';
       return jsonResponse(result);
     }
     if (typeof raw === 'string' && raw.indexOf('data=') === 0) {
-      raw = decodeURIComponent(raw.substring(5).replace(/\+/g, ' '));
+      try {
+        raw = decodeURIComponent(raw.substring(5).replace(/\+/g, ' '));
+      } catch (d) {
+        result.error = 'Invalid data encoding: ' + d.toString();
+        return jsonResponse(result);
+      }
     }
     const data = JSON.parse(raw);
     if (SECRET && data.token !== SECRET) {
