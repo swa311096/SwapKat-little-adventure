@@ -1,4 +1,10 @@
 {
   "buildCommand": null,
-  "outputDirectory": "."
+  "outputDirectory": ".",
+  "crons": [
+    {
+      "path": "/api/cron-weekly-report",
+      "schedule": "0 23 * * 0"
+    }
+  ]
 }

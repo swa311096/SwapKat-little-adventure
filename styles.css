@@ -734,6 +734,17 @@ label { position: relative; }
   color: var(--slate);
 }
 .history-pill.na .score { color: var(--ink-muted); font-size: 14px; font-weight: 500; }
+.history-pill-current {
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.history-pill-current:hover {
+  background: #dce8f2;
+  border-color: rgba(107, 140, 174, 0.4);
+}
+.history-pill-loading .score { color: var(--ink-muted); }
+.history-pill-success .score { color: var(--mint); }
+.history-pill-error .score { color: var(--danger); }
 .history-nav { display: flex; gap: 6px; margin-left: auto; }
 .history-nav button {
   width: 34px;

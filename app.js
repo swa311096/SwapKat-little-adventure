@@ -570,8 +570,8 @@ function renderHistoryCard(data) {
     <div class="history-row">
       ${items
         .map(
-          (h) => `
-        <div class="history-pill ${h.score === null ? "na" : ""}">
+          (h, i) => `
+        <div class="history-pill ${h.score === null ? "na" : ""} ${i === 0 ? "history-pill-current" : ""}" ${i === 0 ? 'data-append-sheet title="Click to append this week\'s report to Google Sheet"' : ""}>
           <div class="label">${escapeHtml(h.label)}</div>
           <div class="score">${h.score === null ? "N/A" : `${h.score}%`}</div>
         </div>
@@ -580,6 +580,61 @@ function renderHistoryCard(data) {
         .join("")}
     </div>
   `;
+
+  el.querySelector("[data-append-sheet]")?.addEventListener("click", async () => {
+    const state = loadDB();
+    if (!state.sheetsExportUrl || !state.sheetsExportUrl.trim()) {
+      setModal({ modal: "export-sheets" });
+      return;
+    }
+    const pill = el.querySelector("[data-append-sheet]");
+    const originalHtml = pill.innerHTML;
+    pill.innerHTML = '<div class="label">Appending...</div><div class="score">–</div>';
+    pill.classList.add("history-pill-loading");
+
+    const result = await appendToGoogleSheet(data, "", "");
+
+    if (result.success) {
+      pill.innerHTML = '<div class="label">Done</div><div class="score">✓</div>';
+      pill.classList.remove("history-pill-loading");
+      pill.classList.add("history-pill-success");
+      setTimeout(() => {
+        pill.innerHTML = originalHtml;
+        pill.classList.remove("history-pill-success");
+      }, 1500);
+    } else {
+      pill.innerHTML = `<div class="label">${result.error || "Failed"}</div><div class="score">!</div>`;
+      pill.classList.remove("history-pill-loading");
+      pill.classList.add("history-pill-error");
+      setTimeout(() => {
+        pill.innerHTML = originalHtml;
+        pill.classList.remove("history-pill-error");
+      }, 2500);
+    }
+  });
+}
+
+async function appendToGoogleSheet(data, whatWentWell = "", whatToImprove = "") {
+  const state = loadDB();
+  const sheetsUrl = (state.sheetsExportUrl || "").trim();
+  if (!sheetsUrl) return { success: false, configured: false, error: "Google Sheet URL not configured" };
+
+  const payload = buildWeeklyReportPayload(data, whatWentWell, whatToImprove);
+
+  try {
+    const res = await fetch(sheetsUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const result = await res.json().catch(() => ({}));
+    if (result.success) {
+      return { success: true, configured: true };
+    }
+    return { success: false, configured: true, error: result.error || "Export failed" };
+  } catch (err) {
+    return { success: false, configured: true, error: "Could not connect" };
+  }
 }
 
 function renderWeeklyReportCard(data) {
@@ -599,29 +654,27 @@ function renderWeeklyReportCard(data) {
 
 function buildWeeklyReportPayload(data, whatWentWell, whatToImprove) {
   const state = loadDB();
-  const progress = computeTaskProgress(data.tasks);
-  const normal = data.tasks.filter((t) => !t.carriedOver);
-  const tasksDone = normal.filter((t) => t.done).length;
-  const outcomesSummary = (data.outcomes || [])
-    .map((o) => {
-      const pct = linkedOutcomeProgress(o, data);
-      return `${o.title}: ${pct}%`;
-    })
-    .join("; ") || "—";
-  const breachesByBehavior = (data.behaviors || []).map((b) => {
-    const c = (data.behaviorLogs || []).filter((l) => l.behaviorId === b.id).length;
-    return c > 0 ? `${b.title} (${c})` : null;
-  }).filter(Boolean);
-  const breachesSummary = breachesByBehavior.length ? breachesByBehavior.join("; ") : "0";
+  const goalsAchievedPct = computeTaskProgress(data.tasks);
+  const outcomes = data.outcomes || [];
+  const outcomesAchievedPct =
+    outcomes.length > 0
+      ? Math.round(
+          outcomes.reduce((sum, o) => sum + linkedOutcomeProgress(o, data), 0) / outcomes.length
+        )
+      : 0;
+  const behaviorsBreached = {};
+  (data.behaviors || []).forEach((b) => {
+    const count = (data.behaviorLogs || []).filter((l) => l.behaviorId === b.id).length;
+    behaviorsBreached[b.title] = count;
+  });
   return {
     token: state.sheetsSecret || undefined,
     week: data.weekLabel,
     user: state.currentUser || "",
     context: state.currentContext || "work",
-    taskCompletion: progress,
-    tasksDone: `${tasksDone}/${normal.length}`,
-    outcomesSummary,
-    breachesSummary,
+    goalsAchievedPct,
+    outcomesAchievedPct,
+    behaviorsBreached,
     whatWentWell: (whatWentWell || "").trim(),
     whatToImprove: (whatToImprove || "").trim()
   };

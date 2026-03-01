@@ -34,6 +34,7 @@ Outcomes are achieved with consistent behavior around right tasks. I created thi
 4. Copy `supabase-config.example.js` to `supabase-config.js` and paste your URL and key
 5. Deploy to [Vercel](https://vercel.com) (connect your GitHub repo) or any static host
 6. Both of you can now access the app from the same URL with shared data
+7. *(Optional)* Enable **automatic weekly export** to Google Sheets every Sunday — see [SHEETS_SETUP.md](SHEETS_SETUP.md#6-automatic-weekly-export-sunday-cron)
 
 ### Option B: Run locally (localStorage)
 
@@ -58,9 +59,11 @@ You can also open `index.html` in a browser, though some features may be limited
 ## Project Structure
 
 ```
-├── index.html   # App shell and templates
-├── styles.css   # Design system and layout
-├── app.js       # State, storage, and rendering logic
+├── index.html      # App shell and templates
+├── styles.css      # Design system and layout
+├── app.js          # State, storage, and rendering logic
+├── api/            # Vercel serverless (cron weekly report)
+├── SHEETS_SETUP.md # Google Sheets export & auto-cron setup
 └── README.md
 ```
 
