@@ -274,30 +274,11 @@ function renderDashboard() {
     const ctx = loadDB().currentContext || "work";
     if (btn.dataset.tab === ctx) btn.classList.add("active");
     else btn.classList.remove("active");
-    btn.addEventListener("click", () => {
-      const next = loadDB();
-      next.currentContext = btn.dataset.tab;
-      saveDB(next);
-      render();
-    });
   });
 
   document.querySelectorAll("[data-user]").forEach((btn) => {
     if (btn.dataset.user === active) btn.classList.add("active");
     else btn.classList.remove("active");
-    btn.addEventListener("click", () => {
-      const next = loadDB();
-      next.currentUser = btn.dataset.user;
-      saveDB(next);
-      render();
-    });
-  });
-
-  document.getElementById("logout-btn")?.addEventListener("click", () => {
-    const next = loadDB();
-    next.currentUser = null;
-    saveDB(next);
-    render();
   });
 
   renderGoalsCard(data);
@@ -1123,3 +1104,32 @@ function renderModal() {
 }
 
 window.addEventListener("popstate", () => renderModal());
+
+// Document-level click delegation for topbar (works even if elements are recreated or covered)
+document.addEventListener("click", (e) => {
+  const tabBtn = e.target.closest("[data-tab]");
+  if (tabBtn) {
+    e.preventDefault();
+    const next = loadDB();
+    next.currentContext = tabBtn.dataset.tab;
+    saveDB(next);
+    render();
+    return;
+  }
+  const userBtn = e.target.closest("[data-user]");
+  if (userBtn) {
+    e.preventDefault();
+    const next = loadDB();
+    next.currentUser = userBtn.dataset.user;
+    saveDB(next);
+    render();
+    return;
+  }
+  if (e.target.closest("#logout-btn")) {
+    e.preventDefault();
+    const next = loadDB();
+    next.currentUser = null;
+    saveDB(next);
+    render();
+  }
+});
